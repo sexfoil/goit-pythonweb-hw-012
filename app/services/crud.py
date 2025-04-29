@@ -1,6 +1,11 @@
+import secrets
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from passlib.context import CryptContext
 from ..repository import models, schemas
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_contact(db: Session, contact: schemas.ContactCreate):
@@ -133,3 +138,50 @@ def get_upcoming_birthdays(db: Session):
                 upcoming_birthdays.append(contact)
 
     return upcoming_birthdays
+
+
+def create_user(db: Session, user: schemas.UserCreate):
+    """
+    Create a new user in the database with a hashed password and verification token.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+        user (schemas.UserCreate): User creation data including username, email, and password.
+
+    Returns:
+        models.User: The newly created user.
+    """
+    hashed_password = pwd_context.hash(user.password)
+    verification_token = secrets.token_urlsafe(32)
+
+    db_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password,
+        verification_token=verification_token,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def verify_email(db: Session, token: str):
+    """
+    Verify a user's email based on the provided verification token.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+        token (str): Verification token to identify the user.
+
+    Returns:
+        models.User | None: The verified user or None if verification fails.
+    """
+    user = db.query(models.User).filter(models.User.verification_token == token).first()
+    if user:
+        user.is_verified = True
+        user.verification_token = None
+        db.commit()
+        db.refresh(user)
+        return user
+    return None
