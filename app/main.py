@@ -9,12 +9,13 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 from .services import crud
-from .repository import models, schemas
-from .routes.auth import get_current_user
-from .routes.auth import router as auth_router
 from .services.cloudinary import upload_avatar
+from .repository import models, schemas
 from .repository.database import engine, get_db
-
+from .security.security import get_current_user
+from .security.utils import require_admin_user_from_cookie
+from .routes.auth_ui import router as auth_ui_router
+from .routes.auth import router as auth_router
 
 load_dotenv()
 
@@ -36,13 +37,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-models.Base.metadata.create_all(bind=engine)
-
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
+app.include_router(auth_ui_router)
 app.include_router(auth_router)
+
+if __name__ == "__main__":
+    models.Base.metadata.create_all(bind=engine)
 
 
 @app.exception_handler(RateLimitExceeded)
@@ -74,7 +77,7 @@ async def read_users_me(
 @app.post("/upload-avatar", response_model=schemas.UserResponse)
 async def upload_avatar_route(
     file: UploadFile = File(...),
-    current_user: schemas.UserResponse = Depends(get_current_user),
+    current_user: schemas.UserResponse = Depends(require_admin_user_from_cookie),
     db: Session = Depends(get_db),
 ):
     """
@@ -92,9 +95,15 @@ async def upload_avatar_route(
     with open(file_path, "wb") as buffer:
         buffer.write(file.file.read())
 
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can update their avatar."
+        )
+
     avatar_url = upload_avatar(file_path, public_id=str(current_user.id))
 
-    user = db.query(models.User).filter(models.User.id == current_user.id).first()
     user.avatar_url = avatar_url
     db.commit()
     db.refresh(user)

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Welcome, {{ user.username }}!</h2>
+    <p>Your role: {{ user.role }}</p>
+
+    {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="Avatar" width="150" height="150">
+    {% else %}
+        <p>No avatar uploaded.</p>
+    {% endif %}
+
+    {% if user.role == "admin" %}
+        <form action="/auth/change-role-form" method="get">
+            <button type="submit">Go to Role Management</button>
+        </form>
+    {% endif %}
+
+    <h3>Upload New Avatar</h3>
+    <form action="/upload-avatar" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <button type="submit">Upload Avatar</button>
+    </form>
+
+    {% if user.role != "admin" %}
+        <p><strong>Note:</strong> Only administrators can actually upload avatars.</p>
+    {% endif %}
+
+    <form action="/logout" method="get">
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>
