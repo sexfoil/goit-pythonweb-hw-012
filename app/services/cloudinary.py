@@ -14,6 +14,19 @@ cloudinary.config(
 
 
 def upload_avatar(file_path: str, public_id: str):
+    """
+    Uploads a user avatar to Cloudinary with resizing and cropping applied.
+
+    Args:
+        file_path (str): Local path to the avatar image file.
+        public_id (str): Unique identifier for the uploaded avatar.
+
+    Returns:
+        str: Secure URL of the uploaded avatar on Cloudinary.
+
+    Raises:
+        Exception: If the upload fails, raises an exception with an error message.
+    """
     try:
         response = cloudinary.uploader.upload(
             file_path,

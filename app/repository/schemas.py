@@ -28,6 +28,15 @@ class ContactResponse(ContactBase):
 
 
 class UserCreate(BaseModel):
+    """
+    Schema for user registration request.
+
+    Attributes:
+        username (str): The username of the user.
+        email (EmailStr): The email address of the user.
+        password (str): The password for the user's account.
+    """
+
     username: str
     email: EmailStr
     password: str

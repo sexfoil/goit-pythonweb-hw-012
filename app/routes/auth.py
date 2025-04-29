@@ -25,14 +25,43 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_password_hash(password: str) -> str:
+    """
+    Hashes the provided password using bcrypt.
+
+    Args:
+        password (str): The plain text password.
+
+    Returns:
+        str: The hashed password.
+    """
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifies that a plain password matches the hashed password.
+
+    Args:
+        plain_password (str): The plain text password.
+        hashed_password (str): The hashed password to compare against.
+
+    Returns:
+        bool: True if the password matches, False otherwise.
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Generates a JWT access token.
+
+    Args:
+        data (dict): The data to include in the token payload.
+        expires_delta (Optional[timedelta]): The token expiration time.
+
+    Returns:
+        str: The generated JWT token.
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -44,6 +73,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def authenticate_user(db: Session, email: str, password: str):
+    """
+    Authenticates a user by verifying email and password.
+
+    Args:
+        db (Session): SQLAlchemy session for database access.
+        email (str): The user's email.
+        password (str): The user's password.
+
+    Returns:
+        User or None: The authenticated user or None if authentication fails.
+    """
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
@@ -72,6 +112,15 @@ async def get_current_user(
 
 
 def create_verification_token(email: str) -> str:
+    """
+    Creates a JWT token for email verification.
+
+    Args:
+        email (str): The email address to verify.
+
+    Returns:
+        str: The generated verification token.
+    """
     expire = datetime.utcnow() + timedelta(hours=24)
     data = {"sub": email, "exp": expire}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)

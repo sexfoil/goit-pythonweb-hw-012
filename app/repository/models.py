@@ -3,6 +3,19 @@ from .database import Base
 
 
 class Contact(Base):
+    """
+    SQLAlchemy model representing a contact entry in the database.
+
+    Attributes:
+        id (int): Primary key identifier of the contact.
+        first_name (str): First name of the contact.
+        last_name (str): Last name of the contact.
+        email (str): Email address of the contact (must be unique).
+        phone (str): Phone number of the contact.
+        birthday (date): Optional birthday of the contact.
+        additional_info (str): Optional additional notes about the contact.
+    """
+
     __tablename__ = "contacts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -15,6 +28,20 @@ class Contact(Base):
 
 
 class User(Base):
+    """
+    SQLAlchemy model representing a user account in the database.
+
+    Attributes:
+        id (int): Primary key identifier of the user.
+        username (str): Unique username.
+        email (str): Unique email address of the user.
+        hashed_password (str): Hashed user password.
+        is_active (bool): Indicates whether the user account is active.
+        is_verified (bool): Indicates whether the user's email is verified.
+        verification_token (str): Token used for verifying user email.
+        avatar_url (str): Optional URL to the user's avatar image.
+    """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
